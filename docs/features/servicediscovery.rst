@@ -1,5 +1,13 @@
+.. role:: htm(raw)
+  :format: html
+.. role:: pdf(raw)
+  :format: latex pdflatex
+
 Service Discovery
 =================
+.. contents:: Table of Contents
+   :depth: 2
+   :local:
 
 Ocelot allows you to specify a *service discovery* provider, which it uses to determine the host and port for the downstream service to which it forwards requests.
 Currently, this feature is only supported in the ``GlobalConfiguration`` section.
@@ -9,25 +17,26 @@ This means the same *service discovery* provider is applied to all routes where 
 
 Consul
 ------
-
 .. _Consul: https://www.consul.io/
 .. _Ocelot.Provider.Consul: https://www.nuget.org/packages/Ocelot.Provider.Consul
+.. _Ocelot.Discovery.Consul: https://www.nuget.org/packages/Ocelot.Discovery.Consul
 
-  | Package: `Ocelot.Provider.Consul`_
-  | Namespace: ``Ocelot.Provider.Consul``
+  | Package: `Ocelot.Discovery.Consul`_
+  | Namespace: ``Ocelot.Discovery.Consul``
+  | Repository: `ThreeMammals/Ocelot.Discovery.Consul <https://github.com/ThreeMammals/Ocelot.Discovery.Consul>`_
 
-The first step is to install `the package <https://www.nuget.org/packages/Ocelot.Provider.Consul>`_, which adds `Consul`_ support to Ocelot:
+The first step is to install `the package <https://www.nuget.org/packages/Ocelot.Discovery.Consul>`_, which adds `Consul`_ support to Ocelot:
 
-.. code-block:: powershell
+.. code-block:: shell
 
-    Install-Package Ocelot.Provider.Consul
+  dotnet add package Ocelot.Discovery.Consul
 
 To register *Consul* services, invoke the ``AddConsul()`` extension method using the ``OcelotBuilder`` returned by ``AddOcelot()`` [#f1]_.
 Include the following code in your `Program`_:
 
 .. code-block:: csharp
 
-  using Ocelot.Provider.Consul;
+  using Ocelot.Discovery.Consul;
 
   builder.Services
       .AddOcelot(builder.Configuration)
@@ -36,15 +45,22 @@ Include the following code in your `Program`_:
 Currently, there are two types of *Consul* service discovery providers: ``Consul`` and ``PollConsul``.
 The default provider is ``Consul``.
 If the ``ConsulProviderFactory`` cannot read, understand, or parse the ``Type`` property of the ``ServiceProviderConfiguration`` object, a :ref:`sd-consul-provider` instance is created by the factory.
-
 Explore these types of *service discovery* providers and learn about their differences in the subsections: :ref:`sd-consul-provider` and :ref:`sd-pollconsul-provider`.
 
-  **Note**: We have made the :ref:`sd-consul-provider` the default *service discovery* provider in Ocelot.
+.. note::
+  We have made the :ref:`sd-consul-provider` the default *service discovery* provider in Ocelot.
+
+.. warning::
+  Prior to version `25.0`_, the package was named `Ocelot.Provider.Consul`_.
+  If you are using version `24.1`_ or earlier, install the `Ocelot.Provider.Consul`_ package.
+  For version `25.0`_ and later, the package ID is `Ocelot.Discovery.Consul`_.
 
 .. _sd-consul-configuration-in-kv:
 
 Configuration in `KV Store`_
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. _KV Store: https://developer.hashicorp.com/consul/docs/automate/kv
+.. _3-second TTL: https://github.com/search?q=repo%3AThreeMammals%2FOcelot.Discovery.Consul%20%22TimeSpan.FromSeconds(3)%22&type=code
 
 Add the following when registering your services. Ocelot will attempt to store and retrieve its :doc:`../features/configuration` in the *Consul* `KV Store`_:
 
@@ -104,13 +120,11 @@ If you do not set the ``ConfigurationKey``, Ocelot will default to using the str
 ``Consul`` Provider
 ^^^^^^^^^^^^^^^^^^^
 
-  Class: `Ocelot.Provider.Consul.Consul <https://github.com/search?q=repo%3AThreeMammals%2FOcelot+Consul&type=code>`_
+  Class: `Ocelot.Discovery.Consul.Consul <https://github.com/ThreeMammals/Ocelot.Discovery.Consul/blob/main/src/Consul.cs>`_
 
 The following is required in the ``GlobalConfiguration`` section.
 The ``ServiceDiscoveryProvider`` property is mandatory.
 If you do not specify a host and port, the default `Consul`_ values will be used.
-
-  **Note**: The ``Scheme`` option defaults to HTTP. This was introduced in pull request `1154`_ and defaults to ``http`` to avoid introducing a breaking change.
 
 .. code-block:: json
   :emphasize-lines: 5
@@ -123,6 +137,8 @@ If you do not specify a host and port, the default `Consul`_ values will be used
   }
 
 In the future, we may add a feature that allows route-specific configuration.
+
+  **Note**: The ``Scheme`` option defaults to HTTP. This was introduced in pull request `1154`_ and defaults to ``http`` to avoid introducing a breaking change.
 
 To instruct Ocelot that a route should use the *service discovery* provider for its host and port, you need to specify the ``ServiceName`` and the load balancer you wish to use for downstream requests.
 Currently, Ocelot supports the `RoundRobin <https://github.com/search?q=repo%3AThreeMammals%2FOcelot%20RoundRobin&type=code>`_ and `LeastConnection <https://github.com/search?q=repo%3AThreeMammals%2FOcelot+LeastConnection&type=code>`_ algorithms.
@@ -139,12 +155,16 @@ If no load balancer is specified, Ocelot will not perform load balancing for req
 
 When set up, Ocelot will look up the downstream host and port from the *service discovery* provider and balance requests across available services.
 
+  **Implementation tips**: The ``GetAsync()`` `method <https://github.com/ThreeMammals/Ocelot.Discovery.Consul/blob/main/src/Consul.cs#L26>`_ fetches health service entries and catalog nodes simultaneously using ``Task.WhenAll``, minimizing round-trip latency when *Consul* is accessed over the network.
+  If no healthy service entries are found for the configured service name, a warning is logged and an empty list is returned.
+  On the happy path, the provider hands control over to the :ref:`Consul Service Builder <sd-consul-service-builder>`, which constructs the services for consumption by Ocelot's middleware components (e.g. load balancing).
+
 .. _sd-pollconsul-provider:
 
 ``PollConsul`` Provider
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-  Class: `Ocelot.Provider.Consul.PollConsul <https://github.com/search?q=repo%3AThreeMammals%2FOcelot%20PollConsul&type=code>`_
+  Class: `Ocelot.Discovery.Consul.PollConsul <https://github.com/ThreeMammals/Ocelot.Discovery.Consul/blob/main/src/PollConsul.cs>`_
 
 A lot of users have requested a feature where Ocelot *polls Consul* for the latest service information instead of doing so per request.
 If you want Ocelot to *poll Consul* for the latest services, rather than relying on the default behavior (per request), you need to configure the following options:
@@ -161,20 +181,33 @@ If you want Ocelot to *poll Consul* for the latest services, rather than relying
 
 The polling interval, measured in milliseconds, specifies how frequently Ocelot calls `Consul`_ for service configuration updates.
 
-  **Note**: There are trade-offs to consider.
-  If you *poll Consul*, Ocelot may not detect if a service is down, depending on your polling interval.
-  This could result in more errors compared to retrieving the latest services per request.
-  The impact largely depends on the volatility of your services.
-  For most users, this is unlikely to be a significant concern, and polling may offer a slight performance improvement over querying `Consul`_ per request (as a sidecar agent).
-  However, if you are communicating with a remote `Consul`_ agent, polling provides a more noticeable performance improvement.
+There are **trade-offs** to consider.
+If you *poll Consul*, Ocelot may not detect if a service is down, depending on your polling interval.
+This could result in more errors compared to retrieving the latest services per request.
+The impact largely depends on the volatility of your services.
+For most users, this is unlikely to be a significant concern, and polling may offer a slight performance improvement over querying `Consul`_ per request (as a sidecar agent).
+However, if you are communicating with a remote `Consul`_ agent, polling provides a more noticeable performance improvement.
+
+.. note::
+  Implementation tips
+
+  1. *First-call behavior:* On the very first request, ``PollConsul`` always fetches fresh service data from *Consul* regardless of the polling interval, because the internal timer is initialized to ``DateTime.MinValue``.
+     Subsequent requests respect the configured ``PollingInterval`` and return the cached list until the interval elapses.
+
+  2. *Thread safety:* The ``PollConsul`` provider uses a lock object to serialize access to the shared services list, making it safe for concurrent requests.
+
+  3. ``ServiceName`` *property*: The provider exposes a ``ServiceName`` property that identifies which downstream service this instance is polling.
+     The ``ConsulProviderFactory`` uses this property to ensure a single ``PollConsul`` instance is created per service name across all concurrent requests.
 
 Service Definition
 ^^^^^^^^^^^^^^^^^^
+.. _Agent Basics: https://developer.hashicorp.com/consul/docs/fundamentals/agent
+.. _Define services: https://developer.hashicorp.com/consul/docs/register/service/vm/define
 
 Your services need to be added to Consul in a manner similar to the example below (C# style, but hopefully it makes sense).
 The key point to note is to avoid including ``http`` or ``https`` in the ``Address`` field.
 We have received feedback regarding issues with the scheme being included in the ``Address``.
-After reviewing the "`Agents Overview <https://developer.hashicorp.com/consul/docs/agent>`_" and "`Define services <https://developer.hashicorp.com/consul/docs/services/usage/define-services>`_" documentation, we believe the **scheme** should not be included.
+After reviewing the "`Agent Basics`_" and "`Define services`_" documentation, we believe the **scheme** should not be included.
 
 In C#
 
@@ -225,6 +258,22 @@ Consul Service Builder [#f3]_
   | Interface: ``IConsulServiceBuilder``
   | Implementation: ``DefaultConsulServiceBuilder``
 
+The `IConsulServiceBuilder <https://github.com/ThreeMammals/Ocelot.Discovery.Consul/blob/main/src/IConsulServiceBuilder.cs>`_ interface defines three public methods that control the entire service-building pipeline:
+
+.. list-table::
+   :widths: 40 60
+   :header-rows: 1
+
+   * - Method
+     - Description
+   * - ``bool IsValid(ServiceEntry entry)``
+     - Validates a *Consul* service entry before it is converted into an Ocelot ``Service`` object.
+       Entries with an empty ``Address``, a scheme prefix in the address (``http://`` or ``https://``), or a zero/negative ``Port`` are rejected with a warning log message.
+   * - ``IEnumerable<Service> BuildServices(ServiceEntry[] entries, Node[] nodes)``
+     - Iterates over all health entries returned by *Consul*, filters them through ``IsValid``, resolves the matching catalog node, and delegates individual construction to ``CreateService``.
+   * - ``Service CreateService(ServiceEntry entry, Node node)``
+     - Assembles a single Ocelot ``Service`` object from a *Consul* health entry and its optional catalog node.
+
 The Ocelot community has consistently reported issues with *Consul* services, both in the past and present, such as connectivity problems due to varying *Consul* agent definitions.
 Some DevOps engineers prefer grouping services as *Consul* `catalog nodes`_ by customizing the assignment of hostnames to node names, while others prioritize defining agent services using pure IP addresses as hosts, which is linked to the `954`_-bug dilemma.
 
@@ -234,7 +283,46 @@ This may raise some criticism from the community.
 Version `23.3`_ introduced a customization feature that enables control over the service-building process through the ``DefaultConsulServiceBuilder`` class.
 This class includes virtual methods that developers and DevOps teams can override to suit their specific requirements.
 
-The current logic in the ``DefaultConsulServiceBuilder`` class is as follows:
+The `DefaultConsulServiceBuilder <https://github.com/ThreeMammals/Ocelot.Discovery.Consul/blob/main/src/DefaultConsulServiceBuilder.cs>`_ class exposes the following protected and public virtual methods as override points:
+
+.. list-table::
+   :widths: 50 50
+   :header-rows: 1
+
+   * - Public virtual method
+     - Description
+   * - ``bool IsValid(ServiceEntry entry)``
+     - Returns ``true`` when the entry's ``Address`` is non-empty, does not start with ``http://`` or ``https://``, and ``Port`` is greater than zero.
+       Override to implement custom validation logic.
+   * - ``IEnumerable<Service> BuildServices(ServiceEntry[] entries, Node[] nodes)``
+     - Filters, resolves, and builds the full list of services.
+       Override for full control over how the collection is assembled.
+   * - ``Service CreateService(ServiceEntry entry, Node node)``
+     - Constructs a single ``Service`` by delegating to the property-level helpers below.
+       Override to change the assembled type or add extra data.
+   * - **Protected virtual method**
+     - **Description**
+   * - ``Node GetNode(ServiceEntry entry, Node[] nodes)``
+     - Resolves the catalog node for an entry by first checking ``entry.Node``, then searching the ``nodes`` array for a node whose ``Address`` matches ``entry.Service.Address``.
+       Override to apply a different node-selection strategy.
+   * - ``string GetDownstreamHost(ServiceEntry entry, Node node)``
+     - Returns ``node.Name`` when a catalog node is available, otherwise falls back to ``entry.Service.Address``.
+       Override this method when you want to use the service IP address instead of the node name.
+   * - ``ServiceHostAndPort GetServiceHostAndPort(ServiceEntry entry, Node node)``
+     - Combines the result of ``GetDownstreamHost`` with ``entry.Service.Port``.
+       Override to provide a fully custom host-and-port resolution strategy.
+   * - ``string GetServiceName(ServiceEntry entry, Node node)``
+     - Returns ``entry.Service.Service``.
+   * - ``string GetServiceId(ServiceEntry entry, Node node)``
+     - Returns ``entry.Service.ID``.
+   * - ``string GetServiceVersion(ServiceEntry entry, Node node)``
+     - Extracts the version from the service tags by locating the first tag prefixed with ``version-`` and stripping that prefix (e.g. the tag ``version-v2`` yields ``v2``).
+       Returns an empty string when no version tag is present.
+   * - ``IEnumerable<string> GetServiceTags(ServiceEntry entry, Node node)``
+     - Returns ``entry.Service.Tags``, or an empty enumerable when the tags collection is ``null``.
+
+The most frequently customized method is ``GetDownstreamHost``.
+Its default logic is:
 
 .. code-block:: csharp
 
@@ -245,12 +333,14 @@ Some DevOps engineers choose to disregard node names, opting for abstract identi
 However, our team strongly recommends assigning real hostnames or IP addresses to node names, considering this a best practice.
 If this approach does not align with your needs, or if you prefer not to invest time in detailing nodes for downstream services, you could define agent services without node names.
 In such cases, within a *Consul* setup, you would need to override the behavior of the ``DefaultConsulServiceBuilder`` class.
-For further information, refer to the ":ref:`sd-addconsul-generic-method`" section below.
+
+  For further information, refer to the ":ref:`sd-addconsul-generic-method`" section below.
 
 .. _sd-addconsul-generic-method:
 
 ``AddConsul<T>`` method
 """""""""""""""""""""""
+.. _acceptance test: https://github.com/search?q=repo%3AThreeMammals%2FOcelot.Discovery.Consul+ShouldReturnServiceAddressByOverriddenServiceBuilderWhenThereIsANode+WithConsulServiceBuilder&type=code
 
   Signature: ``IOcelotBuilder AddConsul<TServiceBuilder>(this IOcelotBuilder builder)``
 
@@ -263,9 +353,8 @@ First, define a new service-building class:
 .. code-block:: csharp
 
   using Ocelot.Logging;
-  using Ocelot.Provider.Consul;
-  using Ocelot.Provider.Consul.Interfaces;
-
+  using Ocelot.Discovery.Consul;
+  
   public class MyConsulServiceBuilder : DefaultConsulServiceBuilder
   {
       public MyConsulServiceBuilder(IHttpContextAccessor contextAccessor, IConsulClientFactory clientFactory, IOcelotLoggerFactory loggerFactory)
@@ -290,30 +379,35 @@ Refer to the repository's `acceptance test`_ for further examples.
 
 Eureka [#f4]_
 -------------
-
+.. |EU_label| image:: https://img.shields.io/badge/-Eureka-E92CDE.svg
+  :target: https://github.com/ThreeMammals/Ocelot/labels/Eureka
+  :alt: label Eureka
+  :class: img-valign-textbottom
 .. _Steeltoe: https://steeltoe.io
 .. _Pivotal: https://pivotal.io/platform
 .. _Eureka: https://www.nuget.org/packages/Steeltoe.Discovery.Eureka
 .. _Ocelot.Provider.Eureka: https://www.nuget.org/packages/Ocelot.Provider.Eureka
+.. _Ocelot.Discovery.Eureka: https://www.nuget.org/packages/Ocelot.Discovery.Eureka
 
-  | Package: `Ocelot.Provider.Eureka`_
-  | Namespace: ``Ocelot.Provider.Eureka``
+  | Label: |EU_label|:pdf:`\href{https://github.com/ThreeMammals/Ocelot/labels/Eureka}{Eureka}`
+  | Package: `Ocelot.Discovery.Eureka`_
+  | Repository: `Ocelot.Discovery.Eureka <https://github.com/ThreeMammals/Ocelot.Discovery.Eureka>`__
 
 This feature supports the Netflix `Eureka`_ *service discovery* provider.
 The primary reason for this is that it is a key product of `Steeltoe`_, which is associated with `Pivotal`_.
 Now, enough of the background!
 
-The first step is to install `the package <https://www.nuget.org/packages/Ocelot.Provider.Eureka>`__ that provides `Eureka`_ support for Ocelot:
+The first step is to install `the package <https://www.nuget.org/packages/Ocelot.Discovery.Eureka>`__ that provides `Eureka`_ support for Ocelot:
 
-.. code-block:: powershell
+.. code-block:: shell
 
-    Install-Package Ocelot.Provider.Eureka
+  dotnet add package Ocelot.Discovery.Eureka
 
 Next, add the following to your `Program <https://github.com/ThreeMammals/Ocelot/blob/main/samples/Eureka/ApiGateway/Program.cs>`__:
 
 .. code-block:: csharp
 
-  using Ocelot.Provider.Eureka;
+  using Ocelot.Discovery.Eureka;
 
   builder.Services
       .AddOcelot(builder.Configuration)
@@ -348,6 +442,12 @@ When Ocelot requests a given service, it retrieves the data from memory, minimiz
 
 If not explicitly specified in `ocelot.json <https://github.com/ThreeMammals/Ocelot/blob/main/samples/Eureka/ApiGateway/ocelot.json>`__, Ocelot will use the scheme (``http``, ``https``) set in *Eureka*.
 
+.. warning::
+
+  Prior to version `25.0`_, the package was named `Ocelot.Provider.Eureka`_.
+  If you are using version `24.1`_ or earlier, install the `Ocelot.Provider.Eureka`_ package.
+  For version `25.0`_ and later, the package ID is `Ocelot.Discovery.Eureka`_.
+
 .. _sd-service-fabric:
 
 Service Fabric
@@ -370,74 +470,83 @@ Please refer to the :doc:`../features/servicefabric` chapter for the complete *e
 Dynamic Routing [#f5]_
 ----------------------
 
-The idea is to enable *dynamic routing* when using a *service discovery* provider (refer to the relevant section of the documentation for more details).
+The idea is to enable *dynamic routing* mode when using a *service discovery* provider.
 In this mode, Ocelot uses the first segment of the upstream path to look up the downstream service via the *service discovery* provider.
 
 An example of this would be calling Ocelot with a URL like
 
-* ``https://api.mywebsite.com/product/products``
+* ``https://api.ocelot.net/product/products``
 
 Ocelot will take the first segment of the path, which is ``product``, and use it as a key to look up the service in :ref:`sd-consul`.
-If :ref:`sd-consul-provider` returns a service, Ocelot will request it using the host and port provided by `Consul`_, appending the remaining path segments—in this case, ``products``—to form the downstream call:
+If :ref:`sd-consul-provider` returns a service, Ocelot will request it using the host and port provided by `Consul`_, appending the remaining path segments—in this case, ``products``—to construct final downstream URL:
 
 * ``http://hostfromconsul:portfromconsul/products``
 
 Ocelot will append any query string to the downstream URL as usual.
 
-  **Note**: To enable *dynamic routing*, your configuration must contain *zero routes*.
-  Currently, dynamic routes and configuration routes cannot be mixed.
-  Additionally, you need to specify the details of the *service discovery* provider as outlined above, along with the downstream ``http``/``https`` scheme under ``DownstreamScheme``.
+.. warning::
 
-In addition, you can configure ``RateLimitOptions``, ``QoSOptions``, ``LoadBalancerOptions``, ``HttpHandlerOptions``, and ``DownstreamScheme``.
-These settings will be applied to all dynamic routes.
+  To enable *dynamic routing*, the `ocelot.json`_ configuration must contain no static routes in the ``Routes`` collection!
+  Currently, dynamic routes and static routes cannot be mixed.
+  Additionally, you need to specify the details of the *service discovery* provider as outlined above, along with the downstream ``http(s)`` scheme under ``DownstreamScheme``.
 
-For example, you might want to call Ocelot using ``https`` while communicating with private services over ``http``.
-The configuration might look like the following:
+.. note::
+
+  In addition to the global ``ServiceDiscoveryProvider`` section, the :ref:`config-global-configuration-schema` includes configurable options such as ``DownstreamScheme``, ``CacheOptions``, ``HttpHandlerOptions``, ``LoadBalancerOptions``, ``QoSOptions``, ``RateLimitOptions``, and ``Timeout``.
+  These options are applicable to all dynamic routes, globally.
+  Moreover, starting with version `24.1`_, the :ref:`config-dynamic-route-schema` also supports these options for overriding global settings.
+
+For instance, when exposing Ocelot publicly over HTTPS while routing to internal services over HTTP, your configuration may resemble the following:
 
   .. code-block:: json
 
     {
-      "Routes": [],
-      "Aggregates": [],
+      "Routes": [], // must be empty to enable dynamic routing!
+      "DynamicRoutes": [
+        // overriding goes here
+      ],
       "GlobalConfiguration": {
-        "RequestIdKey": null,
+        "BaseUrl": "https://api.ocelot.net",
+        "DownstreamScheme": "http", // default scheme for all internal services, no SSL
         "ServiceDiscoveryProvider": {
-          "Host": "localhost",
+          "Host": "localhost", // if Consul is hosted on the same machine as Ocelot
           "Port": 8500,
           "Type": "Consul",
-          "Token": null,
-          "ConfigurationKey": null
+          "Namespace": "" // not supported for Consul, but supported for Kubernetes
         },
-        "RateLimitOptions": {
-          "ClientIdHeader": "ClientId",
-          "QuotaExceededMessage": null,
-          "RateLimitCounterPrefix": "ocelot",
-          "DisableRateLimitHeaders": false,
-          "HttpStatusCode": 429
+        "CacheOptions": {
+          "TtlSeconds": 300 // 5 minutes
         },
-        "QoSOptions": {
-          "ExceptionsAllowedBeforeBreaking": 0,
-          "DurationOfBreak": 0,
-          "TimeoutValue": 0
-        },
-        "BaseUrl": null,
-        "LoadBalancerOptions": {
-          "Type": "LeastConnection",
-          "Key": null,
-          "Expiry": 0
-        },
-        "DownstreamScheme": "http",
         "HttpHandlerOptions": {
           "AllowAutoRedirect": false,
           "UseCookieContainer": false,
           "UseTracing": false
+        },
+        "LoadBalancerOptions": {
+          "Type": "LeastConnection"
+        },
+        "QoSOptions": {
+          "MinimumThroughput": 2,
+          "BreakDuration": 333,
+          "Timeout": 3000 // ms
+        },
+        "RateLimitOptions": {
+          "ClientIdHeader": "Oc-DynamicRouting-Client",
+          "QuotaMessage": "No Quota!",
+          "StatusCode": 499 // special shared status
         }
       }
     }
 
-Ocelot also allows you to configure a ``DynamicRoutes`` collection, which enables you to set :doc:`../features/ratelimiting` rules for each downstream service.
-This feature is particularly useful if, for example, you have both a "product" service and a "search" service, and you want to apply stricter rate limits to one over the other.
-An example configuration is as follows:
+.. _sd-dynamic-routing-configuration:
+
+Configuration [#f6]_
+^^^^^^^^^^^^^^^^^^^^
+
+Ocelot also allows configuration of a ``DynamicRoutes`` collection consisting of :ref:`config-dynamic-route-schema` objects.
+This enables overriding ``RateLimitOptions`` for each downstream service, along with other schema-level overrides.
+Dynamic route options are particularly useful when there are multiple services—such as a '``product``' service and a '``search``' service—and stricter rate limits need to be applied to one over the other.
+The final configuration looks like:
 
   .. code-block:: json
 
@@ -445,36 +554,74 @@ An example configuration is as follows:
       "DynamicRoutes": [
         {
           "ServiceName": "product",
-          "RateLimitRule": {
-            "ClientWhitelist": [],
-            "EnableRateLimiting": true,
+          "ServiceNamespace": "", // not supported for Consul, but supported for Kubernetes
+          "RateLimitOptions": {
+            "Limit": 5,
             "Period": "1s",
-            "PeriodTimespan": 1000.0,
-            "Limit": 3
+            "Wait": "1.5s" // hybrid fixed window
+          }
+        },
+        {
+          "ServiceName": "notification",
+          "CacheOptions": {
+            "TtlSeconds": 0 // disable cache for notifying
+          },
+          "HttpHandlerOptions": {
+            "UseTracing": false // disable tracing
+          },
+          "LoadBalancerOptions": {
+            "Type": "LeastConnection" // switch from RoundRobin to LeastConnection
+          },
+          "RateLimitOptions": {
+            "EnableRateLimiting": false // notification service is unlimited!
           }
         }
       ],
       "GlobalConfiguration": {
-        "RequestIdKey": null,
+        "BaseUrl": "https://api.ocelot.net",
+        "DownstreamScheme": "http",
         "ServiceDiscoveryProvider": {
           "Host": "localhost",
-          "Port": 8523,
-          "Type": "Consul"
+          "Port": 8500,
+          "Type": "Consul",
+          "Namespace": "" // not supported for Consul, but supported for Kubernetes
+        },
+        "CacheOptions": {
+          "TtlSeconds": 300 // 5 minutes
+        },
+        "HttpHandlerOptions": {
+          "PooledConnectionLifetimeSeconds": 600, // change the default value from 2 minutes to 10 minutes
+          "UseTracing": true // enable tracing globally
+        },
+        "LoadBalancerOptions": {
+          "Type": "RoundRobin"
         },
         "RateLimitOptions": {
-          "ClientIdHeader": "ClientId",
-          "QuotaExceededMessage": "",
-          "RateLimitCounterPrefix": "",
-          "DisableRateLimitHeaders": false,
-          "HttpStatusCode": 428
-        },
-        "DownstreamScheme": "http"
+          "ClientIdHeader": "Oc-DynamicRouting-Client",
+          "ClientWhitelist": ["ocelot-client1-preshared-key"],
+          "Limit": 5,
+          "Period": "10s", // fixed window
+          "QuotaMessage": "No Quota!",
+          "StatusCode": 499 // special shared status
+        }
       }
     }
 
-This configuration means that if a request is sent to Ocelot on ``/product/*``, *dynamic routing* will activate, and Ocelot will apply the :doc:`../features/ratelimiting` rules defined for the "product" service in the ``DynamicRoutes`` section.
+This configuration means that when a request is sent to Ocelot at ``/product/*``, *dynamic routing* is activated, and Ocelot applies the rate limiting rules defined for the '``product``' service in the ``DynamicRoutes`` section, as described in the :doc:`../features/ratelimiting` documentation.
+The '``notification``' service is unlimited because both caching, tracing, and rate limiting are disabled.
+All other services use the global ``RateLimitOptions`` along with the other specified options.
 
-For a deeper understanding of these options, please review the documentation.
+.. warning::
+  Dynamic route ``RateLimitRule`` option is deprecated!
+
+  The `old schema <https://github.com/ThreeMammals/Ocelot/blob/24.0.0/src/Ocelot/Configuration/File/FileDynamicRoute.cs>`_ ``RateLimitRule`` section is deprecated in version `24.1`_!
+  Use ``RateLimitOptions`` instead of ``RateLimitRule``! Note that ``RateLimitRule`` will be removed in version `25.0`_!
+  For backward compatibility in version `24.1`_, the ``RateLimitRule`` section takes precedence over the ``RateLimitOptions`` section.
+
+.. note::
+
+  The ``ServiceNamespace`` option was introduced in version `24.1`_ to enable precise overrides for the :doc:`../features/kubernetes` providers.
+  If ``ServiceNamespace`` is left empty or undefined, only **one** dynamic route with the same ``ServiceName`` may be defined in the ``DynamicRoutes`` collection.
 
 .. _sd-custom-providers:
 
@@ -532,8 +679,7 @@ Finally, in the `Program`_, register a ``ServiceDiscoveryFinderDelegate`` to ini
 Sample
 ------
 
-In order to introduce a basic template for a custom Service Discovery provider, we've prepared a good sample:
-To provide a basic template for a custom *Service Discovery* provider, we have prepared a sample:
+To offer a basic template for a :ref:`sd-custom-providers`, we have created a sample:
 
   | Project: `samples <https://github.com/ThreeMammals/Ocelot/tree/main/samples>`_ / `ServiceDiscovery <https://github.com/ThreeMammals/Ocelot/tree/main/samples/ServiceDiscovery>`_
   | Solution: `Ocelot.Samples.ServiceDiscovery.sln <https://github.com/ThreeMammals/Ocelot/blob/main/samples/ServiceDiscovery/Ocelot.Samples.ServiceDiscovery.sln>`_
@@ -605,21 +751,23 @@ However, you can retain this ``Type`` option to maintain compatibility between b
 """"
 
 .. [#f1] The :ref:`di-services-addocelot-method` adds default ASP.NET services to the DI container. You can call another extended :ref:`di-addocelotusingbuilder-method` while configuring services to develop your own :ref:`di-custom-builder`. See more instructions in the ":ref:`di-addocelotusingbuilder-method`" section of the :doc:`../features/dependencyinjection` feature.
-.. [#f2] The ":ref:`sd-consul-configuration-key`" feature was requested in issue `346`_ and introduced in version `7.0.0`_.
-.. [#f3] The customization of ":ref:`sd-consul-service-builder`" was implemented as part of bug fix `954`_, and the feature was delivered in version `23.3`_.
-.. [#f4] The :ref:`sd-eureka` feature, requested in issue `262`_ to add support for the Netflix `Eureka`_ *service discovery* provider, was released in version `5.5.4`_.
-.. [#f5] The :ref:`sd-dynamic-routing` feature was requested in issue `340`_ and released in version `7.0.1`_.
+.. [#f2] The ":ref:`Configuration Key <sd-consul-configuration-key>`" feature was requested in issue `346`_ and introduced in version `7.0.0`_.
+.. [#f3] The customization of ":ref:`Consul Service Builder <sd-consul-service-builder>`" was implemented as part of bug fix `954`_, and the feature was delivered in version `23.3`_.
+.. [#f4] The :ref:`Eureka <sd-eureka>` feature, requested in issue `262`_ to add support for the Netflix `Eureka`_ *service discovery* provider, was released in version `5.5.4`_.
+.. [#f5] The ":ref:`Dynamic Routing <sd-dynamic-routing>`" feature was requested in issue `340`_ (pull request `351`_) and released in version `7.0.1`_.
+  Later, the new ``DynamicRoutes`` :doc:`../features/configuration` section was introduced in pull request `508`_ and released in version `8.0.4`_.
+.. [#f6] The :ref:`Configuration <sd-dynamic-routing-configuration>` feature of :ref:`Dynamic Routing <sd-dynamic-routing>` was requested in issue `585`_, then significantly redeveloped and released in version `24.1`_.
 
 .. _ocelot.json: https://github.com/ThreeMammals/Ocelot/blob/main/samples/ServiceDiscovery/ApiGateway/ocelot.json
 .. _Program: https://github.com/ThreeMammals/Ocelot/blob/main/samples/ServiceDiscovery/ApiGateway/Program.cs
-.. _KV Store: https://developer.hashicorp.com/consul/docs/dynamic-app-config/kv
-.. _3-second TTL: https://github.com/search?q=repo%3AThreeMammals%2FOcelot+TimeSpan.FromSeconds%283%29&type=code
 .. _catalog nodes: https://developer.hashicorp.com/consul/api-docs/catalog#list-nodes
-.. _acceptance test: https://github.com/search?q=repo%3AThreeMammals%2FOcelot+ShouldReturnServiceAddressByOverriddenServiceBuilderWhenThereIsANode+WithConsulServiceBuilder&type=code
 
 .. _262: https://github.com/ThreeMammals/Ocelot/issues/262
 .. _340: https://github.com/ThreeMammals/Ocelot/issues/340
 .. _346: https://github.com/ThreeMammals/Ocelot/issues/346
+.. _351: https://github.com/ThreeMammals/Ocelot/pull/351
+.. _508: https://github.com/ThreeMammals/Ocelot/pull/508
+.. _585: https://github.com/ThreeMammals/Ocelot/issues/585
 .. _909: https://github.com/ThreeMammals/Ocelot/pull/909
 .. _954: https://github.com/ThreeMammals/Ocelot/issues/954
 .. _1154: https://github.com/ThreeMammals/Ocelot/pull/1154
@@ -627,5 +775,8 @@ However, you can retain this ``Type`` option to maintain compatibility between b
 .. _5.5.4: https://github.com/ThreeMammals/Ocelot/releases/tag/5.5.4
 .. _7.0.0: https://github.com/ThreeMammals/Ocelot/releases/tag/7.0.0
 .. _7.0.1: https://github.com/ThreeMammals/Ocelot/releases/tag/7.0.1
+.. _8.0.4: https://github.com/ThreeMammals/Ocelot/releases/tag/8.0.4
 .. _13.5.2: https://github.com/ThreeMammals/Ocelot/releases/tag/13.5.2
 .. _23.3: https://github.com/ThreeMammals/Ocelot/releases/tag/23.3.0
+.. _24.1: https://github.com/ThreeMammals/Ocelot/releases/tag/24.1.0
+.. _25.0: https://github.com/ThreeMammals/Ocelot/releases/tag/25.0.0

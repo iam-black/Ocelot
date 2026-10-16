@@ -11,6 +11,9 @@
 
 Building
 ========
+.. contents:: Table of Contents
+   :depth: 2
+   :local:
 
 This document summarises the build and release process for the `Ocelot`_ project.
 The build scripts are written using `Cake`_ (C# Make), with relevant build tasks defined in the '`build.cake`_' file located in the root of the `Ocelot`_ project.
@@ -19,7 +22,7 @@ or by a CI/CD server (currently `GitHub Actions`_), with minimal logic defined i
 
 The final goal of the build process is to create ``Ocelot.*`` `NuGet`_ packages (.nupkg files) for redistribution via the `NuGet`_ repository or manually.
 The build process consists of several steps: (1) compilation, (2) testing, (3) creating and publishing `NuGet`_ packages, and (4) making an official GitHub release.
-The build process requires pre-installed .NET SDKs on the build machine (host) for all target framework monikers: TFMs are ``net8.0`` and ``net9.0`` currently.
+The build process requires pre-installed .NET SDKs on the build machine (host) for all target framework monikers: TFMs are ``net8.0``, ``net9.0`` and ``net10.0`` currently.
 In general, the build process is the same across all environments and tools, with a few differences described below.
 
 .. _b-in-ide:
@@ -28,7 +31,7 @@ In IDE
 ------
 .. _Release configuration: https://learn.microsoft.com/en-us/visualstudio/debugger/how-to-set-debug-and-release-configurations?view=vs-2022
 
-In an IDE, a DevOps engineer can build the project in Visual Studio IDE or another IDE in `Release configuration`_ mode, but the latest .NET 8/9 SDKs must be pre-installed on the local machine.
+In an IDE, a DevOps engineer can build the project in Visual Studio IDE or another IDE in `Release configuration`_ mode, but the latest .NET 8/9/10 SDKs must be pre-installed on the local machine.
 However, this approach is not practical because the generated '.nupkg' files must be uploaded to `NuGet`_ manually, and the GitHub release must also be created manually.
 A better approach is to utilize the '`build.cake`_' script :ref:`b-in-terminal`, which covers all building scenarios.
 
@@ -110,7 +113,7 @@ For example, use the following command:
 
 You may need to adjust the platform flag depending on your system.
 
-  **Note**: This approach is somewhat excessive, but it will work if you are a masterful Docker user. 🙂
+  **Note**: This approach is somewhat excessive, but it will work if you are a masterful Docker user.
   The Ocelot team has not followed this approach since version `24.0`_, favoring :ref:`b-with-ci-cd`-based builds and occasionally building :ref:`b-in-terminal` instead.
 
 .. _b-with-ci-cd:
@@ -168,7 +171,7 @@ If the code coverage of a newly opened pull request drops below the 80% threshol
 Documentation
 -------------
 .. _docs: https://github.com/ThreeMammals/Ocelot/tree/main/docs
-.. _.readthedocs.yaml: https://github.com/ThreeMammals/Ocelot/blob/main/.readthedocs.yaml
+.. _.readthedocs.yaml: https://github.com/ThreeMammals/Ocelot/blob/main/docs/.readthedocs.yaml
 .. _Read the Docs: https://about.readthedocs.com
 .. _Ocelot app: https://app.readthedocs.org/projects/ocelot/
 .. _README: https://github.com/ThreeMammals/Ocelot/blob/main/docs/readme.md
@@ -199,12 +202,18 @@ More details on the documentation build process can be found in the `README`_.
 
 Testing
 -------
+.. _'build' job: https://github.com/search?q=repo%3AThreeMammals%2FOcelot+build%3A+path%3A%2F%5E%5C.github%5C%2Fworkflows%5C%2F%2F&type=code
+.. _Unit Tests: https://github.com/search?q=repo%3AThreeMammals%2FOcelot+%22Unit+Tests%22+path%3A%2F%5E%5C.github%5C%2Fworkflows%5C%2F%2F&type=code
+.. _Acceptance Tests: https://github.com/search?q=repo%3AThreeMammals%2FOcelot+%22Acceptance+Tests%22+path%3A%2F%5E%5C.github%5C%2Fworkflows%5C%2F%2F&type=code
+.. _'build-cake' job: https://github.com/search?q=repo%3AThreeMammals%2FOcelot+%22-cake%3A%22+path%3A%2F%5E%5C.github%5C%2Fworkflows%5C%2F%2F&type=code
+.. _Cake Build: https://github.com/search?q=repo%3AThreeMammals%2FOcelot+%22cake-build%2F%22+path%3A%2F%5E%5C.github%5C%2Fworkflows%5C%2F%2F&type=code
 
 The tests should run and function correctly as part of the *building* process using the ``dotnet test`` command.
-You can also run them in Visual Studio IDE within the Test Explorer window.
+You can also run them in Visual Studio IDE within the Test Explorer window. :sup:`1`
+
 Depending on your build scenario, `Ocelot`_ *testing* can be performed as follows.
 
-:ref:`b-in-ide`: Simply run tests via the Test Explorer window of Visual Studio IDE.
+:ref:`b-in-ide`: Simply run tests via the Test Explorer window of Visual Studio IDE. :sup:`1`
 
 :ref:`b-in-terminal`: There are two main approaches:
 
@@ -212,15 +221,14 @@ Depending on your build scenario, `Ocelot`_ *testing* can be performed as follow
 
    .. code-block:: shell
 
-      dotnet test -f net8.0 ./Ocelot.sln
+      dotnet test -f net10.0 ./Ocelot.slnx
 
    Or run tests separately per project:
 
    .. code-block:: shell
 
-      dotnet test -f net8.0 ./test/Ocelot.UnitTests/Ocelot.UnitTests.csproj  # Unit tests only
-      dotnet test -f net8.0 ./test/Ocelot.IntegrationTests/Ocelot.IntegrationTests.csproj  # Integration tests only
-      dotnet test -f net8.0 ./test/Ocelot.AcceptanceTests/Ocelot.AcceptanceTests.csproj  # Acceptance tests only
+      dotnet test -f net10.0 ./unit/Ocelot.UnitTests.csproj  # Unit tests only
+      dotnet test -f net10.0 ./acceptance/Ocelot.Acceptance.csproj  # Acceptance tests only
 
 2. Run ``dotnet cake`` command: ``dotnet cake --target=Tests`` to perform all tests (unit, integration and acceptance).
    Or run tests separately per *testing* project:
@@ -228,7 +236,6 @@ Depending on your build scenario, `Ocelot`_ *testing* can be performed as follow
    .. code-block:: shell
 
       dotnet cake --target=UnitTests # unit tests only
-      dotnet cake --target=IntegrationTests # integration tests only
       dotnet cake --target=AcceptanceTests # acceptance tests only
 
 :ref:`b-with-docker`: This approach is not recommended.
@@ -236,15 +243,48 @@ Instead, perform automated testing :ref:`b-with-ci-cd` or opt for :ref:`b-in-ter
 
 :ref:`b-with-ci-cd`: In `GitHub Actions`_ `workflows`_, the *testing* process consists of separate testing steps, organized per job:
 
-* In the `'build' job`_: There are '`Unit Tests`_', '`Integration Tests`_', and '`Acceptance Tests`_' steps.
+* In the `'build' job`_: There are '`Unit Tests`_' and '`Acceptance Tests`_' steps.
 * In the `'build-cake' job`_: There is a '`Cake Build`_' step responsible for performing tests internally.
 
-.. _'build' job: https://github.com/search?q=repo%3AThreeMammals%2FOcelot+build%3A+path%3A%2F%5E%5C.github%5C%2Fworkflows%5C%2F%2F&type=code
-.. _Unit Tests: https://github.com/search?q=repo%3AThreeMammals%2FOcelot+%22Unit+Tests%22+path%3A%2F%5E%5C.github%5C%2Fworkflows%5C%2F%2F&type=code
-.. _Integration Tests: https://github.com/search?q=repo%3AThreeMammals%2FOcelot+%22Integration+Tests%22+path%3A%2F%5E%5C.github%5C%2Fworkflows%5C%2F%2F&type=code
-.. _Acceptance Tests: https://github.com/search?q=repo%3AThreeMammals%2FOcelot+%22Acceptance+Tests%22+path%3A%2F%5E%5C.github%5C%2Fworkflows%5C%2F%2F&type=code
-.. _'build-cake' job: https://github.com/search?q=repo%3AThreeMammals%2FOcelot+%22-cake%3A%22+path%3A%2F%5E%5C.github%5C%2Fworkflows%5C%2F%2F&type=code
-.. _Cake Build: https://github.com/search?q=repo%3AThreeMammals%2FOcelot+%22cake-build%2F%22+path%3A%2F%5E%5C.github%5C%2Fworkflows%5C%2F%2F&type=code
+.. note::
+  :sup:`1` Running `acceptance <https://github.com/ThreeMammals/Ocelot/tree/develop/acceptance>`_ tests in a local IDE environment has :ref:`b-gotchas` on Windows because of possible active application-control or corporate policies.
+  Running the tests in a local terminal is free of those :ref:`b-gotchas` (see point 1).
+
+.. _b-code-coverage:
+
+Code Coverage
+-------------
+
+Continuously merging ``develop`` into the feature branch is the recommended practice.
+After a successful build, the developer should review the unit tests and work toward achieving a green status for code coverage in CI/CD.
+
+Do you know how to generate local code coverage reports using the `dotnet-reportgenerator-globaltool <https://www.nuget.org/packages/dotnet-reportgenerator-globaltool>`_?
+
+1. In the root folder, the ``tools`` folder must be created after running the ``dotnet tool restore`` command, and the ``reportgenerator`` command should then be functional.
+
+2. To use ``reportgenerator``, you must first create a Coverlet XML report file (code coverage report) via the ``dotnet test`` command for the unit testing project (part of :ref:`b-testing`).
+
+For example:
+
+.. code-block:: shell
+
+  dotnet test --project .\unit\Ocelot.UnitTests.csproj --coverlet --framework net10.0 --coverlet-include "[Ocelot*]*" --coverlet-exclude "[Ocelot.Testing]*"
+
+This generates a report in the ``unit\bin\Debug\net10.0\TestResults\`` folder.
+Use it for the ``-reports`` argument in the following command:
+
+.. code-block:: shell
+
+  reportgenerator -reports:D:\github\ThreeMammals\Ocelot\unit\bin\Debug\net10.0\TestResults\coverage.cobertura.300726085513082.xml -targetdir:coveragereport -filefilters:-*.g.cs
+
+Note that ``-reports`` value must be an absolute path to the ``coverage.cobertura.*.xml`` file.
+Finally, it generates HTML webpages. Navigate to ``index.html``.
+
+The alternative to manually generating an HTML coverage report is opening the ``coverage.cobertura.*.xml`` file in Visual Studio 2026 IDE via the "Code Coverage Results" window:
+
+* Menu → Test → Code Coverage Results → Import Results → Open ``coverage.cobertura.*.xml`` file.
+
+This approach is useful for directly navigating to the class, applying code coverage, and highlighting both covered and uncovered lines, right inside Visual Studio 2026 IDE.
 
 SSL certificate
 ---------------
@@ -270,3 +310,39 @@ To create a certificate for :ref:`b-testing`, you can use `OpenSSL <https://www.
 
     openssl pkcs12 -export -in public.pem -inkey private.pem -out mycert.pfx
 
+.. _b-gotchas:
+
+Gotchas
+-------
+
+To be aware of the following gotchas when building `Ocelot`_:
+
+.. admonition:: Gotcha 1
+  :class: warning
+
+  An application-control (corporate) policy on Windows OS machine usually blocks `acceptance`_ test hosts.
+  Ocelot `acceptance`_ tests use custom development SSL certificate and custom DNS records.
+
+When an Ocelot developer runs a freshly cloned repo on Windows 10/11, the Visual Studio IDE testing session for `acceptance`_ tests opens a pop-up window to accept the "Three Mammals" certificate, which is part of the repository.
+Thus, the user must accept this development "Three Mammals" certificate (network) because it connects to a local domain alias in the local DNS file, a.k.a. the ``hosts`` file, which should have the following DNS record:
+
+.. code-block:: text
+
+  # localhost name resolution is handled within DNS itself.
+  127.0.0.1   threemammals.com
+  # ::1       localhost
+
+.. _break4: http://break.do
+
+  **Note**: This is the ``c:\Windows\System32\drivers\etc\hosts`` file on Windows.
+  It is better to comment out the ``::1 localhost`` record to avoid IPv6 issues with the `acceptance`_ tests.
+  That way, only the IPv4 record is used for the ``threemammals.com`` alias.
+  Afterwards, the developer may see the ``threemammals.com`` alias as a ghost network in some reporting tools,
+  but that is OK because you hacked the Windows DNS configuration yourself :)
+
+So, the development certificate must be signed for ``threemammals.com`` (it doesn't exist on the web), which some `acceptance`_ tests connect to.
+These tests must connect only locally, via the DNS alias, to validate the development certificates successfully.
+Our CI/CD scripts add a ``threemammals.com`` record to the local OS DNS system.
+A developer can update the local DNS system once and then forget about it.
+After cloning the Ocelot repository and building it, when running the `acceptance`_ tests, just accept this ghost "Three Mammals" network (Windows) and forget about it too.
+Unfortunately, the Visual Studio IDE respects local policies. The scripts only need a local DNS record, and nothing more.

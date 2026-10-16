@@ -1,5 +1,8 @@
 Routing
 =======
+.. contents:: Table of Contents
+   :depth: 2
+   :local:
 
 Ocelot's primary function is to handle incoming HTTP requests and forward them to a downstream service.
 Currently, Ocelot supports this only through HTTP requests. In the future, it might support other transport mechanisms.
@@ -146,7 +149,7 @@ The placeholder ``{catchAll}`` is not significant, and any name can be used.
     // ...
   }
 
-The *"Catch All"* route has a lower :ref:`routing-priority` than other routes.
+The *"Catch All"* route has a lower :ref:`priority <routing-priority>` than other routes.
 If the following route is included in your configuration, Ocelot will match it before the *"Catch All"* route.
 
 .. code-block:: json
@@ -253,7 +256,7 @@ The placeholder ``{query}`` is not significant, and any name can be used.
 
 This query string routing feature is particularly useful in scenarios where the query string needs to be routed without any transformations—for example, OData filters (see issue `1174`_).
 
-  **Note**: The ``{query}`` placeholder can remain empty while catching all query strings, as this functionality is part of the ":ref:`routing-empty-placeholders`" feature [#f2]_.
+  **Note**: The ``{query}`` placeholder can remain empty while catching all query strings, as this functionality is part of the ":ref:`Empty Placeholders <routing-empty-placeholders>`" feature [#f2]_.
   Consequently, upstream paths ``/contracts?`` and ``/contracts`` are routed to the downstream path ``/apipath/contracts``, with no query string attached.
 
 .. _routing-merging-of-query-parameters:
@@ -427,7 +430,12 @@ Please **note**:
 * The allowed/blocked lists are evaluated during configuration loading.
 * The ``ExcludeAllowedFromBlocked`` property enables specifying a wide range of blocked IP addresses while allowing a subrange of IP addresses. Default value: ``false``.
 * The absence of a property in *Security Options* is permitted, as it takes the default value.
-* *Security Options* can be configured *globally* in the ``GlobalConfiguration`` JSON [#f7]_. However, they are ignored if overriding options are specified at the route level.
+* [#f7]_ *Security Options* can be configured *globally* in the ``GlobalConfiguration`` JSON. However, they are ignored if overriding options are specified at the route level.
+
+.. warning::
+  1. The *Security Options* feature is designed for :ref:`static routes <config-route-schema>` only, and it is not supported in :ref:`Dynamic Routing <routing-dynamic>` mode.
+  2. :doc:`../features/websockets` support and its ``ws`` scheme have been available since version `25.0`_.
+     IP allowed/blocked lists are enforced on *WebSocket* upgrade requests (also known as `CONNECT method <https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods/CONNECT>`_).
 
 .. _routing-dynamic:
 
@@ -435,18 +443,56 @@ Dynamic Routing [#f8]_
 ----------------------
 
 The concept of dynamic *routing* allows you to use a :doc:`../features/servicediscovery` provider, eliminating the need to manually configure *route* settings.
-For more details, refer to the :ref:`sd-dynamic-routing` documentation if this feature interests you.
+For more details, refer to the :ref:`Dynamic Routing <sd-dynamic-routing>` complete reference in the ":doc:`../features/servicediscovery`" chapter.
+
+Errors and Gotchas
+------------------
+.. _Show and tell: https://github.com/ThreeMammals/Ocelot/discussions/categories/show-and-tell
+.. _499 (Client Closed Request): https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.http.statuscodes.status499clientclosedrequest
+.. _504 (Gateway Timeout): https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/504
+
+In this section, Ocelot team has gathered user scenarios where routing behavior was unclear or errors appeared in the logs.
+Please note that the failed routing cases listed below do not represent all application configurations.
+If your case is not included, feel free to open a "`Show and tell`_" discussion.
+
+* **Magic 499 status**.
+  According to Ocelot Core's design, HTTP status code `499 (Client Closed Request)`_ is returned in cases involving an ``OperationCanceledException``.
+  Please note that due to extensive warning-level logging, you may encounter spikes in ``499`` responses—as discussed in thread `2072`_.
+  This status is typically caused by:
+
+  A) Forced cancellation of the request by the client
+  B) Browser events such as page refreshes or closures while the downstream request is still in progress
+
+  As a quick recipe, the Ocelot team recommends ensuring client stability and, if necessary, adjusting the :ref:`config-timeout` strategy:
+  either increasing or decreasing the route :ref:`config-timeout` depending on your usage scenario and the behavior of the downstream service.
+
+* **Timeout errors aka 504 status**.
+  According to Ocelot Core's design, HTTP status code `504 (Gateway Timeout)`_ is returned in cases involving a ``TimeoutException``.
+  This status is typically caused by:
+
+  A) Slow downstream services that may fail to respond
+  B) Large requests forwarded to slow downstream services
+
+  As a quick recipe, the Ocelot team recommends increasing the route :ref:`config-timeout` in your configuration.
+  This adjustment can help resolve timeout-related issues with sluggish downstream services, ultimately reducing occurrences of `504 (Gateway Timeout)`_.
+
+.. _break: http://break.do
+
+  **Note**: For comprehensive documentation regarding errors and status codes in Ocelot, please refer to the :doc:`../features/errorcodes` chapter.
 
 """"
 
-.. [#f1] ":ref:`routing-embedded-placeholders`" feature was requested as part of issue `2199`_ , and released in version `23.4`_
-.. [#f2] ":ref:`routing-empty-placeholders`" feature is available starting in version `23.0`_, see issue `748`_ and the `23.0`_ release notes for details.
-.. [#f3] ":ref:`routing-priority`" feature was requested as part of issue `270`_, and released in version `5.0.1`_
-.. [#f4] ":ref:`routing-upstream-host`" feature was requested as part of issue `209`_ (PR `216`_), and released in version `3.0.1`_
-.. [#f5] ":ref:`routing-upstream-headers`" feature was proposed in issue `360`_ (PR `1312`_), and released in version `23.3`_.
-.. [#f6] ":ref:`routing-security-options`" feature was requested as part of issue `628`_ (version `12.0.1`_), then redesigned and improved by issue `1400`_ (version `23.4.1`_), and published in version `20.0`_ docs.
-.. [#f7] Global ":ref:`routing-security-options`" feature was requested as part of issue `2165`_ , and released in version `23.4.1`_.
-.. [#f8] ":ref:`routing-dynamic`" feature was requested as part of issue `340`_, and released in version `7.0.1`_. Refer to complete reference: :ref:`sd-dynamic-routing`.
+.. [#f1] The ":ref:`Embedded Placeholders <routing-embedded-placeholders>`" feature was requested as part of issue `2199`_ , and released in version `23.4`_
+.. [#f2] The ":ref:`Empty Placeholders <routing-empty-placeholders>`" feature is available starting in version `23.0`_, see issue `748`_ and the `23.0`_ release notes for details.
+.. [#f3] The ":ref:`Priority <routing-priority>`" feature was requested as part of issue `270`_, and released in version `5.0.1`_
+.. [#f4] The ":ref:`Upstream Host <routing-upstream-host>`" feature was requested as part of issue `209`_ (pull request `216`_), and released in version `3.0.1`_
+.. [#f5] The ":ref:`Upstream Headers <routing-upstream-headers>`" feature was proposed in issue `360`_ (pull request `1312`_), and released in version `23.3`_.
+.. [#f6] The ":ref:`Security Options <routing-security-options>`" feature was requested in issue `628`_ (version `12.0.1`_), documented in version `20.0`_, and redesigned in issue `1400`_ (version `23.4.1`_).
+  :doc:`../features/websockets` support, requested via bug `2403`_ (pull request `2406`_), was released in version `25.0`_.
+.. [#f7] The global ":ref:`Security Options <routing-security-options>`" feature was requested in issue `2165`_ and released in version `23.4.1`_.
+  However, this feature is only available for :ref:`static routes <config-route-schema>` and is not supported by :ref:`dynamic routing <routing-dynamic>` (refer to the :ref:`schema <config-dynamic-route-schema>`).
+.. [#f8] The ":ref:`Dynamic Routing <routing-dynamic>`" feature was requested as part of issue `340`_, and released in version `7.0.1`_.
+  Refer to complete reference in the ":doc:`../features/servicediscovery`" chapter: :ref:`Dynamic Routing <sd-dynamic-routing>`.
 
 .. _model binding: https://learn.microsoft.com/en-us/aspnet/core/mvc/models/model-binding?view=aspnetcore-8.0#collections
 .. _Bind arrays and string values from headers and query strings: https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding?view=aspnetcore-8.0#bind-arrays-and-string-values-from-headers-and-query-strings
@@ -464,8 +510,11 @@ For more details, refer to the :ref:`sd-dynamic-routing` documentation if this f
 .. _1174: https://github.com/ThreeMammals/Ocelot/issues/1174
 .. _1312: https://github.com/ThreeMammals/Ocelot/pull/1312
 .. _1400: https://github.com/ThreeMammals/Ocelot/issues/1400
+.. _2072: https://github.com/ThreeMammals/Ocelot/discussions/2072
 .. _2165: https://github.com/ThreeMammals/Ocelot/issues/2165
 .. _2199: https://github.com/ThreeMammals/Ocelot/issues/2199
+.. _2403: https://github.com/ThreeMammals/Ocelot/issues/2403
+.. _2406: https://github.com/ThreeMammals/Ocelot/pull/2406
 
 .. _3.0.1: https://github.com/ThreeMammals/Ocelot/releases/tag/3.0.1
 .. _5.0.1: https://github.com/ThreeMammals/Ocelot/releases/tag/5.0.1
@@ -476,3 +525,4 @@ For more details, refer to the :ref:`sd-dynamic-routing` documentation if this f
 .. _23.3: https://github.com/ThreeMammals/Ocelot/releases/tag/23.3.0
 .. _23.4: https://github.com/ThreeMammals/Ocelot/releases/tag/23.4.0
 .. _23.4.1: https://github.com/ThreeMammals/Ocelot/releases/tag/23.4.1
+.. _25.0: https://github.com/ThreeMammals/Ocelot/releases/tag/25.0.0

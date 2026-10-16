@@ -1,55 +1,156 @@
-## Upgrade to .NET 9 (TFM `net9.0`, version 24.0) aka [.NET 9](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) release
-> Milestone: [.NET 9](https://github.com/ThreeMammals/Ocelot/milestone/11)
-> Codenamed: [.NET 9](https://devblogs.microsoft.com/dotnet/announcing-dotnet-9/)
-> Read the Docs: [Ocelot 24.0](https://ocelot.readthedocs.io/en/{0}/) with [PDF](https://ocelot.readthedocs.io/_/downloads/en/{0}/pdf/)
-> Target Framework Monikers: `net8.0`, `net9.0`
+<!--
+{{0}} -> {0}
+{{1}} -> {1}
+Tag to substitute: {0}
+https://www.nuget.org/packages/Ocelot/{0}
+-->
+
+## :package: Reference SDK [10.0.402](https://dotnet.microsoft.com/en-us/download/dotnet/10.0). Runtime [10.0.13](https://github.com/dotnet/core/blob/main/release-notes/10.0/10.0.13/10.0.13.md) patch (version [{0}](https://www.nuget.org/packages/Ocelot/{0}))
+
+> SDK: [10.0.402](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)  
+> Patched versions: [25.0.0](https://github.com/ThreeMammals/Ocelot/releases/tag/25.0.0), [25.0.1](https://github.com/ThreeMammals/Ocelot/releases/tag/25.0.1)
+
+Version [{0}](https://www.nuget.org/packages/Ocelot/{0}) includes upgraded solutions of all [Ocelot packages](https://github.com/ThreeMammals/Ocelot/blob/develop/ReleaseRadar.md) based on .NET SDK [10.0.402](https://dotnet.microsoft.com/en-us/download/dotnet/10.0), released on October 13, 2026. For more details about SDK [10.0.402](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) (also known as Runtime [10.0.13](https://github.com/dotnet/core/blob/main/release-notes/10.0/10.0.13/10.0.13.md)), see the [.NET 10.0.13 Release Notes](https://github.com/dotnet/core/blob/main/release-notes/10.0/10.0.13/10.0.13.md) as part of the [.NET 10 Release Notes](https://github.com/dotnet/core/blob/main/release-notes/10.0/README.md).
+
+## :fire: Hotfix for bugs #2352 and #2428 (version [{0}](https://www.nuget.org/packages/Ocelot/{0})), a.k.a. [Dynamic Routing](https://ocelot.readthedocs.io/en/25.0/features/servicediscovery.html#dynamic-routing) patch :package:
+
+> Affected Milestones: [.NET 10](https://github.com/ThreeMammals/Ocelot/milestone/13), [Summer '25](https://github.com/ThreeMammals/Ocelot/milestone/9)  
+> Hotfixed versions: [24.1.0](https://github.com/ThreeMammals/Ocelot/releases/tag/24.1.0) ("Globality"), [25.0.0](https://github.com/ThreeMammals/Ocelot/releases/tag/25.0.0), [25.0.1](https://github.com/ThreeMammals/Ocelot/releases/tag/25.0.1) (".NET 10")  
+> Read the Docs: [Ocelot 25.0](https://ocelot.readthedocs.io/en/25.0/) with [PDF](https://ocelot.readthedocs.io/_/downloads/en/25.0/pdf/)
+
+:fire: Hotfixed bugs are #2352 and #2428. A sincere and heartfelt "Thank You" goes to @xiexihui, @elenacalugaru, and @alin-popa for reporting these critical bugs.
+:heart: A special "Thank You" goes to **Beka Mosulishvili** (@bekammo) for the professional and timely contributions in pull requests #2427 and #2429.
+
+## :exclamation: Breaking Changes :exclamation:
+
+**Interface Breaking Changes**:
+- Interface FQN: [Ocelot.DownstreamRouteFinder.Finder.IDownstreamRouteProvider](https://github.com/ThreeMammals/Ocelot/blob/25.0.1/src/DownstreamRouteFinder/Finder/IDownstreamRouteProvider.cs)
+- Deleted type FQN: [Ocelot.DownstreamRouteFinder.DownstreamRouteHolder](https://github.com/ThreeMammals/Ocelot/blob/25.0.1/src/DownstreamRouteFinder/DownstreamRouteHolder.cs)
+
+The [IDownstreamRouteProvider.Get](https://github.com/ThreeMammals/Ocelot/blob/{0}/src/DownstreamRouteFinder/Finder/IDownstreamRouteProvider.cs) method now returns `Response<Route>` (previously `Response<DownstreamRouteHolder>`). The `DownstreamRouteHolder` class has been removed. Placeholders are now stored directly on `Route.TemplatePlaceholderNameAndValues`. Custom implementations of `IDownstreamRouteProvider` and any code that references `DownstreamRouteHolder` require updates and recompilation.
+
+**Other changes affecting deployments**:
+
+1. [Dynamic Routing](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/servicediscovery.rst#dynamic-routing) no longer attempts to build [upstream header templates](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/routing.rst#upstream-headers) from incoming request headers (fixes `RegexParseException` on certain browser headers such as `sec-ch-ua`). An empty collection is returned instead. Static routing is unchanged.
+2. Reference updated to .NET SDK [10.0.402](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) / Runtime [10.0.13](https://github.com/dotnet/core/blob/main/release-notes/10.0/10.0.13/10.0.13.md).
+
+<!--
+
+## Upgrade to [.NET 10](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) SDK (TFM `net10.0`, version [25.0](https://www.nuget.org/packages/Ocelot/{0})) a.k.a. the [.NET 10](https://devblogs.microsoft.com/dotnet/announcing-dotnet-10/) release
+> **Milestone: [.NET 10](https://github.com/ThreeMammals/Ocelot/milestone/13)** :point_left:
+> Codenamed: [.NET 10](https://devblogs.microsoft.com/dotnet/announcing-dotnet-10/)
+> Read the Docs: [Ocelot 25.0](https://ocelot.readthedocs.io/en/{0}/) with [PDF](https://ocelot.readthedocs.io/_/downloads/en/{0}/pdf/)
+> Target Framework Monikers: `net8.0`, `net9.0`, `net10.0`
 
 ### :information_source: About
-On November 12th, 2024, the [.NET team](https://devblogs.microsoft.com/dotnet/author/dotnet) announced the release of the [.NET 9](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) framework:
+On November 11th, 2025, the [.NET team](https://devblogs.microsoft.com/dotnet/author/dotnet) announced the release of the [.NET 10](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) framework:
 
-* .NET Blog: [Announcing .NET 9](https://devblogs.microsoft.com/dotnet/announcing-dotnet-9/)
+* .NET Blog: [Announcing .NET 10](https://devblogs.microsoft.com/dotnet/announcing-dotnet-10/)
 
-This major release upgrades [Ocelot](https://www.nuget.org/packages/Ocelot) package [TFMs](https://learn.microsoft.com/en-us/dotnet/standard/frameworks#latest-versions) to `net9.0` in addition to the current `net8.0`. Thus, the current Ocelot [supported frameworks](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core#lifecycle) are .NET 8 LTS and .NET 9 STS. According to the [.NET Support Policy](https://dotnet.microsoft.com/en-us/platform/support/policy), the Ocelot team has discontinued support of .NET 6 and .NET 7 by providing the version [23.4.3](https://github.com/ThreeMammals/Ocelot/releases/tag/23.4.3) which targets those .NET versions.
+This major release upgrades the [Ocelot](https://www.nuget.org/packages/Ocelot#supportedframeworks-body-tab) package [TFMs](https://learn.microsoft.com/en-us/dotnet/standard/frameworks#latest-versions) to **`net10.0`** in addition to the current `net8.0` and `net9.0`. Thus, the current Ocelot [supported frameworks](https://dotnet.microsoft.com/en-us/platform/support/policy/dotnet-core#lifecycle) are .NET 8 LTS, .NET 9 STS, and **.NET 10** LTS.
 
-### :bookmark: Official Notice to the Community Regarding CircleCI
+Additionally, in this major release the Ocelot team focused on preparing the codebase and its ecosystem for the **.NET 10** SDK ([.NET 10](https://github.com/ThreeMammals/Ocelot/milestone/13) milestone), while also extracting several [integrated extension packages](https://www.nuget.org/profiles/ThreeMammals) from [the v24.1 monorepo](https://github.com/ThreeMammals/Ocelot/tree/24.1.0/src) into their own [dedicated repositories](https://github.com/orgs/ThreeMammals/repositories?q=Ocelot.) to speed up delivery and reduce release coupling. As a result of these [DevOps](https://github.com/ThreeMammals/Ocelot/labels/DevOps) activities, the Ocelot repository now hosts only two package projects — [Ocelot](https://github.com/ThreeMammals/Ocelot/tree/{0}/src) (`src` folder) and [Ocelot.Testing](https://github.com/ThreeMammals/Ocelot/tree/{0}/testing) (`testing` folder) — along with two solutions, `Ocelot.slnx` and `Ocelot.Samples.slnx`, which can be opened or built only if the **.NET 10** SDK is installed. Since the extension packages now live in separate repositories, a new [Release Radar](https://github.com/ThreeMammals/Ocelot#satellite-release-radar) status page has been introduced to track their progress.
 
-Ocelot's previous CI/CD provider, [CircleCI](https://circleci.com/), facilitated professional and seamless development, build processes, and delivery of Ocelot versions for seven years, starting in [March 2018](https://github.com/ThreeMammals/Ocelot/pull/283). But last year, in January 2025, after patching Ocelot with version [23.4.3](https://github.com/ThreeMammals/Ocelot/releases/tag/23.4.3), our team encountered legal issues related to [CircleCI](https://circleci.com/) Co's policies, leading to this CI/CD provider stopping the build process for the [Ocelot project](https://app.circleci.com/pipelines/github/ThreeMammals/Ocelot). This legal issue and technical incident were unforeseen on our part because Ocelot is _open-source software_ (OSS), and forcibly stopping the project's build process and blocking accounts appears to be an unfortunate breach of OSS principles. We strongly believe that any developer or user, from any country, should be able to use software providers that support the OSS movement by offering free or other cost-free plans and serving the accounts of these users, OSS teams, and OSS projects 24/7, 365 days a year. We consider this legal issue and the resulting technical incidents involving CircleCI to be a serious breach of OSS principles and an act of discrimination against Ocelot users, developers, and customers who rely on Ocelot OSS, ultimately causing delays to the current release. **As a team, we do not recommend using CircleCI for OSS projects**, as there is no guarantee that these projects will not face discrimination from this U.S. company.
+This major version also includes the following feature updates:
+- A built-in [Quality of Service](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/qualityofservice.rst) (QoS) circuit breaker (express edition) that works out of the box without requiring the [Polly](https://www.nuget.org/packages/Polly/) library.
+- Significant enhancements to the [WebSockets](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/websockets.rst) feature, including [WebSockets middleware](https://github.com/ThreeMammals/Ocelot/blob/{0}/src/WebSockets/WebSocketsProxyMiddleware.cs) overriding and the addition of [Security Options](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/routing.rst#security-options-6) to the WebSockets pipeline.
+- Improved [Configuration](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/configuration.rst) experience that merges multiple `ocelot.*.json` files, keeping users' [extended properties](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/configuration.rst#extend-with-custom-properties-6) available during Ocelot app startup and at runtime via the standard `IConfiguration` service in the DI container.
 
-For all developers, team leads, architects, and managers of any OSS projects—at least on GitHub—we recommend utilizing the built-in GitHub Actions CI/CD infrastructure. Since its founding, GitHub has supported OSS projects. Today, GitHub provides 2,000 minutes of free CI/CD build time per month for OSS repositories (public repos). Also, we strongly believe that GitHub will never violate its OSS policies without a notice period, nor fail to inform owners and maintainers that certain policies must be met by Ocelot's owners. In addition, we want to acknowledge that we are monitoring U.S. government regulations. Unfortunately, we must state that some GitHub products are unavailable in certain countries, even if the project is OSS and GitHub claims these products are free for OSS. Since the Ocelot team does not utilize these non-critical products (we prefer to energize our brains rather than rely on AI-driven products), and since the Ocelot project is currently well-served by GitHub Co, the Ocelot team affirms that Ocelot will remain on GitHub as long as its OSS-friendly policies continue. As a team, we hope that GitHub will never enforce extra rules on our project or other OSS projects.
-Regardless, we remain on GitHub! <img src="https://raw.githubusercontent.com/ThreeMammals/Ocelot/refs/heads/assets/images/octocat.png" alt="octocat" height="20" />
+Finally, because the repository has a [new folder structure](https://github.com/ThreeMammals/Ocelot#file_folder-repository-structure), the development team recommends recloning or even reforking the Ocelot repository for a successful upgrade to the new version in order to avoid potential build errors.
+
+As a best practice, the release strategy has been aligned with [.NET SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) monthly [patches](https://github.com/dotnet/core/tree/main/release-notes/10.0#release-notes) (usually available between the 10th and 15th of each month). The development team will therefore also aim to roll out monthly Ocelot patches that reference the new .NET SDK patched versions. Ocelot patches will follow the form of a beta or patched version `major.minor.*`, where `*` is the Ocelot patch number corresponding to the newly available [.NET SDK patch](https://github.com/dotnet/core/blob/main/release-notes/10.0/README.md).
+
+Ideally, the Ocelot team expects accelerated releases with more frequent minor/patch versions, because [DevOps](https://github.com/ThreeMammals/Ocelot/labels/DevOps) is now prepared for the new release strategy and offers fast delivery.
+
+For successful contributions, maintainers will announce an identity-verification procedure (details for first-time contributors will be published soon).
 
 ### :new: What's New?
 
-- [DevOps](https://github.com/ThreeMammals/Ocelot/labels/DevOps): The CI/CD infrastructure was migrated from CircleCI to GitHub Actions by @raman-m.
+- :star: **[Quality of Service](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/qualityofservice.rst)**: A "[Built-in Circuit Breaker](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/qualityofservice.rst#built-in-qos)" feature [implementation](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/qualityofservice.rst#implementations-overview) was added by @ocelot-ot in pull request #2385 — no [Polly](https://www.nuget.org/packages/Polly/) required. :star:
 
-  Starting from version [24.0](https://github.com/ThreeMammals/Ocelot/releases/tag/{0}), all pull requests, development commits, and releases will be built using [GitHub Actions](https://github.com/features/actions) workflows ([documentation](https://docs.github.com/en/actions)). We currently have [three workflows](https://github.com/ThreeMammals/Ocelot/tree/main/.github/workflows): one for pull requests ([PR](https://github.com/ThreeMammals/Ocelot/blob/main/.github/workflows/pr.yml)), one for the `develop` branch ([Develop](https://github.com/ThreeMammals/Ocelot/blob/main/.github/workflows/develop.yml)), and one for the `main` branch ([Release](https://github.com/ThreeMammals/Ocelot/blob/main/.github/workflows/release.yml)). All workflow runs are available on the [Actions dashboard](https://github.com/ThreeMammals/Ocelot/actions).
+  Ocelot's QoS schema no longer strictly depends on the external [Ocelot.QualityOfService.Polly](https://www.nuget.org/packages/Ocelot.QualityOfService.Polly/) package to provide circuit breaking and timeout enforcement.
+  A lightweight, thread-safe circuit breaker (`Closed` &rarr; `Open` &rarr; `HalfOpen` &rarr; `Closed`) ships in the Ocelot core package, supporting both count-based and `FailureRatio`-based modes.
+  The [two implementations](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/qualityofservice.rst#implementations-overview) are mutually exclusive: the last of `AddQualityOfService()` or `AddPolly()` registered on the `OcelotBuilder` wins.
+  See the [built-in QoS](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/qualityofservice.rst#built-in-qos) documentation for full details, including the `AddQualityOfService<THandler>()` extensibility point for overriding server error codes.
 
-  The [PR](https://github.com/ThreeMammals/Ocelot/blob/main/.github/workflows/pr.yml) workflow will track code coverage using [Coveralls](https://coveralls.io/). After opening a pull request or submitting a new commit to a pull request, [Coveralls](https://coveralls.io) will publish a short message with the current code coverage once the top commit is built. Considering that [Coveralls](https://coveralls.io) retains the entire history but does not fail the build if coverage falls below the threshold, all workflows have a built-in 80% threshold, applied internally within the `build-cake` job, particularly during the "Cake Build" step-action. If the code coverage of a newly opened pull request drops below the 80% threshold, the `build-cake` job will fail, logging an appropriate message in the "Cake Build" step. For your information, the current code coverage of the Ocelot project is around 85-86%. The coverage threshold is subject to change in upcoming releases. All Coveralls builds can be viewed by navigating to the [ThreeMammals/Ocelot](https://coveralls.io/github/ThreeMammals/Ocelot) project on Coveralls.io.
+- **[WebSockets](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/websockets.rst)**: The "[Overridable WebSocket buffer size](https://github.com/ThreeMammals/Ocelot/issues/2386)" feature and custom middleware injection were added by @erannevo in pull request #2387.
+
+  The previously hard-coded `DefaultWebSocketBufferSize` is now a `protected virtual` property that can be overridden by subclassing.
+  The [Middleware Injection](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/middlewareinjection.rst) feature was extended with a `WebSocketsProxyMiddleware` override on the [OcelotPipelineConfiguration class](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/middlewareinjection.rst#ocelotpipelineconfiguration-class), allowing a fully custom WebSocket middleware to be injected into the pipeline.
+  Refer to the "[Sample](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/websockets.rst#sample-6)" section to understand how to utilize the new feature.
+
+- **[WebSockets](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/websockets.rst)**: The "[SecurityOptions support for the WebSocket pipeline](https://github.com/ThreeMammals/Ocelot/issues/2403)" feature was added by @CurtisRobertOliver in pull request #2406.
+
+  Previously, IP allow/block-list [Routing](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/routing.rst) "[Security Options](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/routing.rst#security-options-6)" were not enforced for WebSocket upgrade requests (a.k.a. the `CONNECT` HTTP method), allowing them to bypass IP security.
+  WebSocket upgrade requests are now intercepted by the same `IPSecurityPolicy` used for regular HTTP requests, and denied upgrades now correctly return `403 Forbidden`.
+
+- :star: **[Configuration](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/configuration.rst)**: The "[Extend configuration with Custom Properties](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/configuration.rst#extend-with-custom-properties)" feature was implemented by @jlukawska in pull request #1183. :star:
+
+  Ocelot's configuration builder now merges custom (non-schema) JSON properties defined across multiple `ocelot.*.json` files using Newtonsoft's `JToken` merge functionality, instead of the last-loaded file silently overwriting properties from previous files in the `Routes` collection.
+  This also applies to the `DynamicRoutes` collection and the `GlobalConfiguration` section. See the updated [Configuration](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/configuration.rst) documentation, especially the "[Extend configuration with Custom Properties](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/configuration.rst#extend-with-custom-properties)" section, and the [Configuration Sample](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/configuration.rst#sample) app for details.
+
+- :airplane: **[Aggregation](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/aggregation.rst)**: A new "[Manual/custom aggregators](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/aggregation.rst#aggregate-manually) for [Complex Aggregation](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/aggregation.rst#complex-aggregation)" feature has been published (originally developed by @TomPallister in pull requests #248, #310). :airplane:
+
+  While working on bug #2248 in pull request #2328 by @NandanDevHub, the development team uncovered an undocumented feature in the [Multiplexer](https://github.com/ThreeMammals/Ocelot/tree/{0}/src/Multiplexer) namespace and decided to publish this pilot feature in the "[Aggregate Manually?](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/aggregation.rst#aggregate-manually)" documentation. The feature is based on the `IResponseAggregator` interface, whose correct application is currently unclear. The Ocelot team will test it further in upcoming releases, develop best practices, create a sample app, and inform the community. For this reason we warn that the feature is still in pilot status. :airplane:
 
 ### :up: What's Updated?
 
-- **[Core](https://github.com/ThreeMammals/Ocelot/labels/Core)**:
-  The main [Ocelot](https://www.nuget.org/packages/Ocelot) package and all [extension](https://www.nuget.org/profiles/ThreeMammals) packages [reference](https://github.com/search?q=repo%3AThreeMammals%2FOcelot%20%3CTargetFrameworks%3E&type=code) `net8.0` and `net9.0` target framework monikers (TFMs). Refer to [TargetFrameworks](https://github.com/search?q=repo%3AThreeMammals%2FOcelot%20%3CTargetFrameworks%3E&type=code) to verify this. The `net6.0` and `net7.0` TFMs have been removed. If your project still relies on these outdated TFMs, please continue using version [23.4.3](https://github.com/ThreeMammals/Ocelot/releases/tag/23.4.3).
+- **[Extension packages](https://www.nuget.org/profiles/ThreeMammals)** extraction #2334: The Ocelot team continued extracting [integrated extension packages](https://www.nuget.org/profiles/ThreeMammals) out of [the monorepo](https://github.com/ThreeMammals/Ocelot/tree/24.1.0/src) into their own [dedicated repositories](https://github.com/orgs/ThreeMammals/repositories?q=Ocelot.), each with an independent release cycle:
 
-- **[Authentication](https://ocelot.readthedocs.io/en/{0}/features/authentication.html)**:
-  Testing of [Identity Server Bearer Tokens](https://ocelot.readthedocs.io/en/{0}/features/authentication.html#identity-server-bearer-tokens) functionality was stopped due to [vulnerabilities](https://github.com/ThreeMammals/Ocelot/security/dependabot) reported by Dependabot, specifically the "[IdentityServer Open Redirect vulnerability](https://github.com/ThreeMammals/Ocelot/security/dependabot?q=is%3Aclosed+IdentityServer)" security issue. More technical details were provided in the [23.4.3](https://github.com/ThreeMammals/Ocelot/releases/tag/23.4.3) release notes, where we notified the community. Ultimately, issue #2218 was addressed via pull request #2274.
-  >**Note**: In upcoming releases, we plan to utilize the [ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity) framework in our [acceptance testing](https://github.com/ThreeMammals/Ocelot/tree/main/test/Ocelot.AcceptanceTests) project to align with .NET industry standards. As a result, we intend to replace the [IdentityServer4](https://github.com/DuendeArchive/IdentityServer4) library with [ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity), which also supports Bearer tokens, also known as `JwtBearerHandler` from the [Microsoft.AspNetCore.Authentication.JwtBearer](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.jwtbearer) namespace.
+  * [Ocelot.Cache.CacheManager](https://github.com/ThreeMammals/Ocelot.Cache.CacheManager/) in pull request #2360
+  * [Ocelot.Tracing.Butterfly](https://github.com/ThreeMammals/Ocelot.Tracing.Butterfly/) in pull request #2361
+  * [Ocelot.Tracing.OpenTracing](https://github.com/ThreeMammals/Ocelot.Tracing.OpenTracing/) in pull request #2362
+  * [Ocelot.Discovery.Eureka](https://github.com/ThreeMammals/Ocelot.Discovery.Eureka/) (renamed from `Ocelot.Provider.Eureka`, see issue #2371) in pull request #2372
+  * [Ocelot.QualityOfService.Polly](https://github.com/ThreeMammals/Ocelot.QualityOfService.Polly/) (renamed from `Ocelot.Provider.Polly`, see issue #2378) in pull request #2380
+  * [Ocelot.Discovery.Consul](https://github.com/ThreeMammals/Ocelot.Discovery.Consul/) (renamed from `Ocelot.Provider.Consul`, see issue #2378) in pull request #2388
+  * [Ocelot.Discovery.KubeClient](https://github.com/ThreeMammals/Ocelot.Discovery.KubeClient/) (renamed from `Ocelot.Provider.Kubernetes`, see issue #2378) in pull request #2404
 
-- **[Administration](https://ocelot.readthedocs.io/en/{0}/features/administration.html)**:
-  The [Ocelot.Administration](https://www.nuget.org/packages/Ocelot.Administration) extension package has been renamed to [Ocelot.Administration.IdentityServer4](https://github.com/ThreeMammals/Ocelot.Administration.IdentityServer4) (it is scheduled for deprecation) to address all [IdentityServer4](https://github.com/DuendeArchive/IdentityServer4)-related [vulnerabilities](https://github.com/ThreeMammals/Ocelot/security/dependabot) (issue #2218). The [package's source code](https://github.com/ThreeMammals/Ocelot/tree/release/23.4/src/Ocelot.Administration) has been moved out of the Ocelot repository (pull request #2274) and transferred to the newly created [Ocelot.Administration.IdentityServer4](https://github.com/ThreeMammals/Ocelot.Administration.IdentityServer4) repository.
-  >**Note**: Currently, the [Administration](https://ocelot.readthedocs.io/en/{0}/features/administration.html) feature is solely based on the [IdentityServer4 package](https://github.com/ThreeMammals/Ocelot/blob/release/23.4/src/Ocelot.Administration/Ocelot.Administration.csproj#L38), whose [repository](https://github.com/IdentityServer/IdentityServer4) was archived by its owner on July 31, 2024. The Ocelot team will deprecate the new [Ocelot.Administration.IdentityServer4](https://github.com/ThreeMammals/Ocelot.Administration.IdentityServer4) extension package after the current Ocelot release; however, the repository will not be archived, allowing for potential patches in the future.
+  This keeps the Ocelot core repository lean, avoids delays caused by the integrated packages' own release schedules, and lets each provider evolve independently.
+  Consult the [Caching](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/caching.rst), [Tracing](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/tracing.rst), [Service Discovery](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/servicediscovery.rst), and [Kubernetes](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/kubernetes.rst) chapters for package-specific upgrade notes.
+  Please note that some of the packages are deprecated! To watch the status of each package and its repository, go to the [Release Radar](https://github.com/ThreeMammals/Ocelot/blob/{0}/ReleaseRadar.md) status page.
 
-- **[Kubernetes](https://ocelot.readthedocs.io/en/{0}/features/kubernetes.html)**:
-  1. Answered question #2256 on "How to provide a host to the Kubernetes service discovery provider?"
-    Unfortunately, in the [Kubernetes](https://ocelot.readthedocs.io/en/{0}/features/kubernetes.html) chapter, it was unclear to users how to define a K8s endpoint host in the [Configuration](https://ocelot.readthedocs.io/en/{0}/features/kubernetes.html#configuration) due to the implicit reuse of `KubeClient`, which is created from the pod account during [Install](https://ocelot.readthedocs.io/en/{0}/features/kubernetes.html#install)-ation. As a team, we decided to add the new [AddKubernetes(Action&lt;KubeClientOptions&gt;) method](https://ocelot.readthedocs.io/en/{0}/features/kubernetes.html#addkubernetes-action-kubeclientoptions-method), which handles different user scenarios. It is now possible to provide manually configured `KubeClientOptions` in C# during [Install](https://ocelot.readthedocs.io/en/{0}/features/kubernetes.html#install)-ation, but users can also reuse `ServiceDiscoveryProvider` options from the global [configuration](https://ocelot.readthedocs.io/en/{0}/features/kubernetes.html#configuration), including the `Host` option to construct the [kubernetes](https://ocelot.readthedocs.io/en/{0}/features/kubernetes.html) endpoint address. The new overloaded `AddKubernetes(Action<KubeClientOptions>)` method was implemented in pull request #2257.
-  2. In the [Ocelot.Provider.Kubernetes](https://www.nuget.org/packages/Ocelot.Provider.Kubernetes/) extension package, the `KubeClient` dependency library version was upgraded to `3.0.x`, which requires .NET 8.0 and .NET 9.0 TFMs for the current Ocelot version [24.0](https://github.com/ThreeMammals/Ocelot/releases/tag/24.0.0). `KubeClient` v3 was internally reviewed and released specifically to meet Ocelot's needs for this release. Thanks to Adam Friedman (@tintoy) for his collaboration! This package upgrade was implemented in pull request #2266.
+- **[Kubernetes](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/kubernetes.rst)**: The "[PollKube provider](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/kubernetes.rst#pollkube-provider-3)" was redesigned by @raman-m in pull request #2358.
 
-- **[Sample](https://github.com/ThreeMammals/Ocelot/labels/sample)**:
-  The learning [Samples](https://github.com/ThreeMammals/Ocelot/tree/main/samples) projects were reviewed, rewritten, and refactored due to issue #1912. The community brought to our attention that the documentation and [samples](https://github.com/ThreeMammals/Ocelot/tree/main/samples) were outdated, as .NET 8 allows the `Program.cs` file to be minimized using the "[Top-level statements](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/program-structure/top-level-statements)" feature. This was ultimately addressed in pull requests #2244 and #2258.
+  The `PollKube` discovery provider was redesigned to utilize `PeriodicTimer` ([introduced](https://github.com/dotnet/runtime/pull/53899) in .NET 6). The provider is based on an "active polling" strategy that requires stable behavior and careful management of timing events in multi-threaded scenarios. The new `PeriodicTimer` is designed for thread safety, and its callbacks replace the old `Timer` callbacks, which work fine in a synchronous flow.
+  Please note that the `PollKube` discovery provider is now part of the [Ocelot.Discovery.KubeClient](https://github.com/ThreeMammals/Ocelot.Discovery.KubeClient) package.
 
-### :notebook: Documentation Summary
-Due to the major version increase to v24, all documentation chapters were reviewed to improve readability, eliminate ambiguity, provide more useful tables and data schemas, update code snippets with the syntax of [Top-level statements](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/program-structure/top-level-statements), and add handy samples, among other enhancements. The entire documentation is designed to be truly professional for senior developers while remaining easy to read for junior developers and newcomers who are starting to use the Ocelot gateway.
+- **[DevOps](https://github.com/ThreeMammals/Ocelot/labels/DevOps)**: Extensive testing and tooling modernization was carried out by contributors ahead of [.NET 10](https://github.com/ThreeMammals/Ocelot/milestone/13) milestone:
 
-We believe that Ocelot students will ask fewer questions in 2025 :wink:
-For students, we always recommend finding answers in [Q&A](https://github.com/ThreeMammals/Ocelot/discussions/categories/q-a) category first. Honestly, it is advised to read existing discussions before opening a new question in repo [discussions](https://github.com/ThreeMammals/Ocelot/discussions).
-For true Ocelot patriots, we have added a [README link](https://github.com/ThreeMammals/Ocelot?tab=readme-ov-file#documentation) to the smart [Ocelot AI Guru](https://gurubase.io/g/ocelot) assistant, which is always ready to answer any of your questions. Feel free to explore and interact with it! :blush:
+  * Solutions upgraded to the [Visual Studio 2026 Solution File Format](https://devblogs.microsoft.com/visualstudio/new-simpler-solution-file-format/) a.k.a. [.NET 10 CLI solution file format](https://devblogs.microsoft.com/dotnet/introducing-slnx-support-dotnet-cli/) (`.sln` &rarr; `.slnx`), by @raman-m in pull request #2354.
+  * Testing projects migrated from xUnit v2 to xUnit v3 (by @methran1304 in #2356), and acceptance tests migrated to the `Microsoft.Testing.Platform` framework (by @raman-m in #2392).
+  * [Ocelot.Testing](https://github.com/ThreeMammals/Ocelot.Testing) was re-embedded into the monorepo (by @ocelot-ot in #2364) and later excluded from Cobertura coverage via `coverlet.runsettings` (by @ocelot-ot in #2365).
+  * [Codecov](https://about.codecov.io/) coverage reporting was installed for the repository, by @raman-m in pull request #2359.
+  * NuGet packages were continuously bumped to their latest versions to support .NET SDK `10.0.*` (.NET Runtime `10.0.*`), by @raman-m and @ocelot-ot in pull requests #2367, #2389, #2402, and #2409.
+
+  The updated documentation also highlights [the deprecation](https://github.com/search?q=repo%3AThreeMammals%2FOcelot+deprecated+language%3AreStructuredText&type=code&l=reStructuredText) of certain packages through multiple notes and warnings.
+  With the [Obsolete attributes](https://github.com/search?q=repo%3AThreeMammals%2FOcelot%20%5BObsolete&type=code) in place, C# developers will notice several warnings in the build logs during compilation.
+
+### :package: Patches
+
+- **[Routing](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/routing.rst)**: Issue #2346 was patched by @bhargav-polara in pull request #2351.
+
+  This fixes a bug where downstream URL query parameter names could be corrupted if they contained a placeholder with a non-empty value.
+  The `DownstreamUrlCreatorMiddleware` query-string merging algorithm was refactored to take full advantage of ASP.NET Core's `QueryHelpers`.
+
+- **[Error Handling](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/errorcodes.rst)**: Issue #2376 was patched by @Majdi-Zlitni in pull request #2379.
+
+  Requests containing non-ASCII characters in HTTP header values previously surfaced as an unhandled `HttpRequestException` and an HTTP `502 Bad Gateway` response.
+  Ocelot now catches this `HttpRequestException` and maps it to a `400 Bad Request` response, in line with [RFC 7230](https://www.rfc-editor.org/rfc/rfc7230) "[Field Parsing](https://www.rfc-editor.org/info/rfc7230/#section-3.2.4)" rules.
+
+- :fire: **[WebSockets](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/websockets.rst)**: Critical issue #2403 was patched by @CurtisRobertOliver in pull request #2406. :fire:
+
+  Previously, IP allow/block-list [Routing](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/routing.rst) "[Security Options](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/routing.rst#security-options-6)" were not enforced for WebSocket upgrade requests, allowing them to bypass IP security.
+  WebSocket upgrade requests are now intercepted by the same `IPSecurityPolicy` used for regular HTTP requests, and denied upgrades now correctly return `403 Forbidden`.
+
+  This critical security issue was [detected by security scanners on GitHub](https://github.com/ThreeMammals/Ocelot/issues/2403#event-7907427333) after the bug was reported. :see_no_evil:
+  Many thanks to **George Chen** (@geo-chen) for reporting this critical bug.
+
+- **[Aggregation](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/aggregation.rst)**: Issue #2248 was patched by @NandanDevHub in pull request #2328.
+
+  [Complex Aggregation](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/aggregation.rst#complex-aggregation) routes configured with the `RouteKeysConfig` array now correctly map route keys to the corresponding aggregator context, fixing a bug where keys could be mismatched or dropped during multiplexing.
+
+- **[Administration](https://github.com/ThreeMammals/Ocelot/blob/{0}/docs/features/administration.rst)**: Issue #989 was patched by @mmustafasenoglu in pull request #2412.
+
+  The `{{adminPath}}/configuration` and `{{adminPath}}/outputcache/{{region}}` endpoints are now decorated with `[ApiExplorerSettings(IgnoreApi = true)]` so that they no longer appear in Swagger/OpenAPI documentation generated for the downstream API surface.
+
+-->
